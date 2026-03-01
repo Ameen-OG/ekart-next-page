@@ -2,15 +2,32 @@ import { getProduct } from "../../lib/api";
 import { useCart } from "../../context/CartContext";
 import { motion } from "framer-motion";
 import Head from 'next/head'
+import { useRouter } from 'next/router';
 
 export default function ProductDetail({ product }) {
+  const router = useRouter();
   const { addToCart } = useCart();
 
-  // Add loading or error state if product is missing
+  // Show loading state while page is being generated
+  if (router.isFallback) {
+    return (
+      <div className="max-w-7xl mx-auto p-6 text-center">
+        <h1 className="text-2xl">Loading...</h1>
+      </div>
+    );
+  }
+
+  // Add error state if product is missing
   if (!product) {
     return (
       <div className="max-w-7xl mx-auto p-6 text-center">
         <h1 className="text-2xl">Product not found</h1>
+        <button 
+          onClick={() => router.push('/products')}
+          className="mt-4 bg-black text-white px-6 py-2 hover:bg-gray-800 transition-colors"
+        >
+          Back to Products
+        </button>
       </div>
     );
   }
@@ -29,7 +46,7 @@ export default function ProductDetail({ product }) {
           <img 
             src={product.image} 
             alt={product.title}
-            className="ml-30 w-75 h-75 object-contain"
+            className="w-full max-w-md mx-auto object-contain"
           />
         )}
         <div>
@@ -37,7 +54,7 @@ export default function ProductDetail({ product }) {
           {product.price && (
             <p className="text-xl text-blue-600 my-4">${product.price}</p>
           )}
-          <p>{product.description}</p>
+          <p className="text-gray-700 mb-6">{product.description}</p>
           <button
             onClick={() => addToCart(product)}
             className="bg-black text-white px-6 py-2 mt-4 hover:bg-gray-800 transition-colors"
@@ -52,24 +69,27 @@ export default function ProductDetail({ product }) {
 
 export async function getServerSideProps({ params }) {
   try {
+    console.log(`Fetching product ${params.id}...`);
     const product = await getProduct(params.id);
     
     // If product is null or undefined, return notFound
     if (!product) {
+      console.log(`Product ${params.id} not found`);
       return {
-        notFound: true, // This will show 404 page
+        notFound: true,
       };
     }
     
+    console.log(`Product ${params.id} fetched successfully`);
     return { 
       props: { 
-        product: JSON.parse(JSON.stringify(product)) // Serialize for Next.js
+        product: JSON.parse(JSON.stringify(product))
       } 
     };
   } catch (error) {
-    console.error("Error fetching product:", error);
+    console.error(`Error fetching product ${params.id}:`, error);
     return {
-      notFound: true, // Show 404 page on error
+      notFound: true,
     };
   }
 }

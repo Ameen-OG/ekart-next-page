@@ -7,6 +7,16 @@ export default function Products({ allProducts }) {
   const router = useRouter();
   const { search = "", sort = "default" } = router.query;
 
+  // Show message if no products
+  if (!allProducts || allProducts.length === 0) {
+    return (
+      <div className="max-w-7xl mx-auto p-6 text-center">
+        <h1 className="text-2xl">No products available</h1>
+        <p className="text-gray-500 mt-2">Please check back later</p>
+      </div>
+    );
+  }
+
   // 1. FILTER & SORT logic (Client-side for speed)
   const filteredProducts = allProducts
     .filter((product) => {
@@ -33,8 +43,6 @@ export default function Products({ allProducts }) {
       </Head>
 
       <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-       
-
         <select 
           onChange={handleSortChange}
           value={sort}
@@ -63,13 +71,8 @@ export default function Products({ allProducts }) {
 
 export async function getServerSideProps() {
   try {
-    // Add timeout to prevent hanging
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-    
+    console.log("Fetching products...");
     const data = await getProducts();
-    clearTimeout(timeoutId);
-    
     console.log("Products fetched successfully:", data?.length || 0, "items");
     
     return { 
