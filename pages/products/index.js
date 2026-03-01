@@ -63,14 +63,26 @@ export default function Products({ allProducts }) {
 
 export async function getServerSideProps() {
   try {
+    // Add timeout to prevent hanging
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    
     const data = await getProducts();
+    clearTimeout(timeoutId);
+    
+    console.log("Products fetched successfully:", data?.length || 0, "items");
+    
     return { 
       props: { 
-        // Pass to component as allProducts to keep original list intact
-        allProducts: JSON.parse(JSON.stringify(data)) 
+        allProducts: data || [] 
       } 
     };
   } catch (error) {
-    return { props: { allProducts: [] } };
+    console.error("Failed to fetch products:", error);
+    return { 
+      props: { 
+        allProducts: [] 
+      } 
+    };
   }
 }
